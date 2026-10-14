@@ -38,7 +38,11 @@ func (p *pipe) Len() int {
 	}
 	return p.b.Len()
 }
-
+func (p *pipe) setBuffer(b pipeBuffer) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.b = b
+}
 // Read waits until data is available and copies bytes
 // from the buffer into p.
 func (p *pipe) Read(d []byte) (n int, err error) {
