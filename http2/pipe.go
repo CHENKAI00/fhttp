@@ -71,20 +71,22 @@ var errClosedPipeWrite = errors.New("write on closed buffer")
 // Write copies bytes from p into the buffer and wakes a reader.
 // It is an error to write more data than the buffer can hold.
 func (p *pipe) Write(d []byte) (n int, err error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.c.L == nil {
-		p.c.L = &p.mu
-	}
-	defer p.c.Signal()
-	if p.err != nil {
-		return 0, errClosedPipeWrite
-	}
-	if p.breakErr != nil {
-		p.unread += len(d)
-		return len(d), nil // discard when there is no reader
-	}
-	return p.b.Write(d)
+    p.mu.Lock()
+    defer p.mu.Unlock()
+
+    if p.c == nil {
+        p.c = sync.NewCond(&p.mu)
+    }
+    defer p.c.Signal()
+
+    if p.err != nil {
+        return 0, errClosedPipeWrite
+    }
+    if p.breakErr != nil {
+        p.unread += len(d)
+        return len(d), nil // discard when there is no reader
+    }
+    return p.b.Write(d)
 }
 
 // CloseWithError causes the next Read (waking up a current blocked
