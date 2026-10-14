@@ -78,9 +78,9 @@ func (p *pipe) Write(d []byte) (n int, err error) {
     p.mu.Lock()
     defer p.mu.Unlock()
 
-    if p.c == nil {
-        p.c = sync.NewCond(&p.mu)
-    }
+    if p.c.L == nil {
+    p.c.L = &p.mu
+}
     defer p.c.Signal()
 
     if p.err != nil {
